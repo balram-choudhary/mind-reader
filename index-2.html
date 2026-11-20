@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MIND READER — Duel</title>
+<style>
+:root{--bg:#080b16;--panel:#11182a;--line:#26334f;--blue:#53b7ff;--red:#ff637c;--text:#f3f6ff;--muted:#9ba9c4;--gold:#ffd36a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#1c3158 0,transparent 55%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+.wrap{max-width:760px;margin:auto;padding:20px 15px 42px}.brand{text-align:center;font-weight:900;letter-spacing:.22em;color:#9bd8ff;font-size:12px}.brand span{color:#fff}.hero{text-align:center;margin:8px 0 20px}.hero h1{font-size:clamp(34px,9vw,54px);line-height:1;margin:8px 0;background:linear-gradient(90deg,#6bc5ff,#fff,#ff8296);background-clip:text;color:transparent}.hero p{color:var(--muted);margin:8px 0;font-size:13px}
+.card{background:linear-gradient(145deg,rgba(22,32,55,.96),rgba(13,19,34,.96));border:1px solid var(--line);border-radius:19px;padding:16px;margin:12px 0;box-shadow:0 14px 35px #0005}
+h2{font-size:16px;margin:0 0 12px}h3{font-size:13px;margin:0 0 8px;color:#c7d5ef}.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}.muted{color:var(--muted);font-size:12px}.small{font-size:11px;color:var(--muted)}
+input{width:100%;padding:13px;border-radius:11px;border:1px solid #344361;background:#080f20;color:#fff;font-size:16px;outline:none;text-transform:uppercase}
+button{border:0;border-radius:12px;padding:13px 14px;background:linear-gradient(110deg,#1679d3,#4b9fff);color:white;font-weight:800;font-size:14px;cursor:pointer}
+button.secondary{background:#202c45;border:1px solid #3a4b6b}button:disabled{opacity:.35;cursor:not-allowed}
+.hidden{display:none!important}.players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.player{padding:13px;border-radius:14px;background:#0b1222;border:1px solid var(--line)}.player.p1{border-color:#28618b}.player.p2{border-color:#8b3449}.pname{font-size:12px;color:var(--muted)}.hp{font-size:24px;font-weight:900;margin:3px 0}.bar{height:7px;border-radius:9px;background:#263149;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#42a8ff,#74d6ff);transition:width .3s}.p2 .fill{background:linear-gradient(90deg,#ff526e,#ff9c9c)}
+.status{text-align:center;padding:12px;border-radius:13px;background:#0a1222;border:1px solid #253652;margin:12px 0;color:#dbe8ff;font-size:13px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.choice{background:#0b1427;border:1px solid #344564;border-radius:14px;padding:12px 5px;color:#fff}.choice .emoji{font-size:30px;display:block}.choice.selected{border:2px solid var(--gold);background:#302a1b}.powers{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.power{padding:10px 3px;background:#111d33;border:1px solid #344563;border-radius:12px;font-size:11px}.power b{display:block;font-size:19px;margin-bottom:3px}.power.selected{border:2px solid var(--gold);background:#302a1b}.power.used{opacity:.28;text-decoration:line-through}
+.center{text-align:center}.result{font-size:22px;font-weight:900;margin:8px}.log{font-size:12px;color:#bdc9df;line-height:1.6;white-space:pre-line}.pill{display:inline-block;border-radius:20px;padding:4px 9px;background:#1c2b45;color:#b9d9ff;font-size:10px;font-weight:800}
+.notice{font-size:12px;color:#f4d58b;line-height:1.5}.footer{text-align:center;color:#65738e;font-size:10px;margin:18px 0}
+@media(max-width:380px){.powers{grid-template-columns:repeat(2,1fr)}.wrap{padding:16px 11px}}
+</style></head>
+<body><main class="wrap">
+<div class="brand">MIND <span>READER</span> / DUEL PROTOCOL</div>
+<header class="hero"><h1>MIND READER</h1><p>Read the move. Outsmart the mind. Win the duel.</p></header>
+
+<section id="lobby" class="card">
+<h2>⚔️ Enter the arena</h2>
+<p class="muted">Create a room and share its code, or join a friend's room. Both players need an internet connection.</p>
+<div class="row"><button id="createBtn">Create room</button><button id="joinToggle" class="secondary">Join room</button></div>
+<div id="joinBox" class="hidden" style="margin-top:12px"><input id="roomInput" maxlength="5" placeholder="ROOM CODE (e.g. A7K2Q)"><button id="joinBtn" style="width:100%;margin-top:8px">Join duel</button></div>
+<div id="lobbyMsg" class="small" style="margin-top:10px"></div>
+</section>
+
+<section id="game" class="hidden">
+<div class="card">
+<div class="row"><div><span class="pill" id="roomBadge">ROOM -----</span><div class="small" id="roleText" style="margin-top:7px">Waiting for opponent</div></div><button id="copyBtn" class="secondary">Copy code</button></div>
+<div class="players" style="margin-top:14px">
+<div class="player p1"><div class="pname" id="name1">PLAYER 1</div><div class="hp" id="hp1">100 HP</div><div class="bar"><div class="fill" id="bar1" style="width:100%"></div></div></div>
+<div class="player p2"><div class="pname" id="name2">PLAYER 2</div><div class="hp" id="hp2">100 HP</div><div class="bar"><div class="fill" id="bar2" style="width:100%"></div></div></div>
+</div>
+<div class="status" id="status">Waiting for another player to join…</div>
+</div>
+
+<div id="playPanel" class="card hidden">
+<h2>Choose your move</h2><p class="muted">Pick one move and one power. Your choices stay hidden until both players lock in.</p>
+<div class="choices">
+<button class="choice" data-move="rock"><span class="emoji">🪨</span>ROCK</button>
+<button class="choice" data-move="paper"><span class="emoji">📄</span>PAPER</button>
+<button class="choice" data-move="scissors"><span class="emoji">✂️</span>SCISSORS</button>
+</div>
+<h3 style="margin-top:17px">SPECIAL POWER <span class="small">(each usable once per match)</span></h3>
+<div class="powers">
+<button class="power" data-power="none"><b>⚪</b>Normal</button>
+<button class="power" data-power="double"><b>⚡</b>Double<br>Damage</button>
+<button class="power" data-power="shield"><b>🛡️</b>Shield</button>
+<button class="power" data-power="reverse"><b>🔄</b>Reverse</button>
+</div>
+<button id="lockBtn" style="width:100%;margin-top:14px" disabled>Lock choices</button>
+<div class="small center" id="selectionHint" style="margin-top:8px">Select a move and power</div>
+</div>
+
+<div id="waitPanel" class="card hidden center"><div style="font-size:30px">🔒</div><h2>Choices locked!</h2><p class="muted">Waiting for your opponent. Your move is hidden.</p></div>
+
+<div id="resultPanel" class="card hidden center">
+<span class="pill">ROUND RESULT</span><div class="result" id="resultTitle">ROUND WON</div><div class="log" id="resultDetail"></div>
+<button id="nextBtn" style="width:100%;margin-top:14px">Next round</button>
+<p class="small" id="nextHint">Both players must be ready for the next round.</p>
+</div>
+<div class="card"><h3>📜 Match history</h3><div id="history" class="log">No rounds played yet.</div></div>
+<button id="leaveBtn" class="secondary" style="width:100%">Leave room</button>
+</section>
+<div class="footer">MIND READER • 2 PLAYER ONLINE DUEL • BUILT FOR MOBILE</div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue, update, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* 1) Replace these values with your Firebase project's web-app config. */
+const firebaseConfig = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://PASTE_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "PASTE_PROJECT_ID",
+  appId: "PASTE_APP_ID"
+};
+const $ = id => document.getElementById(id);
+let app,auth,db,uid,roomCode,mySlot,roomRef,unsubscribe,selectedMove=null,selectedPower="none",roomData=null;
+const powers=["double","shield","reverse"];
+const labels={none:"Normal",double:"Double Damage",shield:"Shield",reverse:"Reverse"};
+function msg(t){$("lobbyMsg").textContent=t}
+function show(id,on=true){$(id).classList.toggle("hidden",!on)}
+function validConfig(){return !firebaseConfig.apiKey.startsWith("PASTE_")&&!firebaseConfig.projectId.startsWith("PASTE_")&&!firebaseConfig.appId.startsWith("PASTE_")}
+async function init(){
+ if(!validConfig()) throw new Error("Add your Firebase config in the HTML file first (setup guide below).");
+ app=initializeApp(firebaseConfig);auth=getAuth(app);db=getDatabase(app);
+ const cred=await signInAnonymously(auth);uid=cred.user.uid;
+}
+function makeCode(){return Math.random().toString(36).slice(2,7).toUpperCase()}
+async function createRoom(){
+ try{msg("Connecting…");if(!db)await init();
+ let code=makeCode(),r=ref(db,"mindReaderRooms/"+code);
+ await set(r,{status:"waiting",host:uid,createdAt:Date.now(),round:1,players:{[uid]:{slot:1,name:"PLAYER 1",hp:100,used:{double:false,shield:false,reverse:false},ready:false}},rounds:{1:{choices:{},result:null}}});
+ enterRoom(code,1);
+ }catch(e){msg(e.message)}
+}
+async function joinRoom(){
+ try{let code=$("roomInput").value.trim().toUpperCase();if(code.length!==5)throw new Error("Enter the 5-character room code.");
+ if(!db)await init();let r=ref(db,"mindReaderRooms/"+code),s=await get(r);if(!s.exists())throw new Error("Room not found.");
+ let d=s.val(),players=d.players||{};if(Object.keys(players).length>=2&&!players[uid])throw new Error("This room already has two players.");
+ if(!players[uid]){players[uid]={slot:2,name:"PLAYER 2",hp:100,used:{double:false,shield:false,reverse:false},ready:false};await update(r,{players,status:"playing"});}
+ enterRoom(code,players[uid]?.slot||2);
+ }catch(e){msg(e.message)}
+}
+function enterRoom(code,slot){
+ roomCode=code;mySlot=slot;roomRef=ref(db,"mindReaderRooms/"+code);
+ show("lobby",false);show("game");$("roomBadge").textContent="ROOM "+code;$("roleText").textContent="You are PLAYER "+slot;
+ if(unsubscribe)unsubscribe();
+ unsubscribe=onValue(roomRef,s=>{if(!s.exists()){msg("Room was closed.");return}roomData=s.val();render()});
+}
+function currentRound(){return roomData?.rounds?.[roomData.round]||{choices:{},result:null}}
+function render(){
+ let ps=roomData.players||{},arr=Object.values(ps).sort((a,b)=>a.slot-b.slot),p1=arr.find(p=>p.slot===1),p2=arr.find(p=>p.slot===2);
+ $("name1").textContent=p1?"PLAYER 1":"WAITING…";$("name2").textContent=p2?"PLAYER 2":"WAITING…";
+ for(let [p,n] of [[p1,1],[p2,2]]){$("hp"+n).textContent=(p?.hp??100)+" HP";$("bar"+n).style.width=(p?.hp??100)+"%"}
+ let r=currentRound(),choices=r.choices||{},mine=choices[uid],both=Object.keys(choices).length>=2;
+ if(!p2){$("status").textContent="Share room code "+roomCode+" with your opponent.";show("playPanel",false);show("waitPanel",false);show("resultPanel",false);return}
+ if(roomData.status==="finished"){$("status").textContent="MATCH OVER";show("playPanel",false);show("waitPanel",false);show("resultPanel",true);$("resultTitle").textContent=roomData.winner===uid?"🏆 YOU WIN!":"YOU LOST";$("resultDetail").textContent=roomData.winner===uid?"You defeated your opponent.":"Your opponent won the match."; $("nextBtn").classList.add("hidden");return}
+ $("status").textContent="ROUND "+roomData.round+" • First to reduce opponent to 0 HP wins";
+ if(r.result){show("playPanel",false);show("waitPanel",false);show("resultPanel",true);$("resultTitle").textContent=r.result.title;$("resultDetail").textContent=r.result.detail;$("nextBtn").classList.remove("hidden");$("nextHint").textContent=roomData.players[uid]?.ready?"You're ready. Waiting for opponent…":"Tap next round when ready."; $("nextBtn").disabled=!!roomData.players[uid]?.ready;return}
+ show("resultPanel",false);
+ if(mine){show("playPanel",false);show("waitPanel",true);$("status").textContent=both?"Revealing choices…":"Your choice is locked. Waiting for opponent…";if(both)resolveRound();return}
+ show("waitPanel",false);show("playPanel",true);
+ powers.forEach(x=>{let b=document.querySelector('[data-power="'+x+'"]');b.classList.toggle("used",!!roomData.players[uid].used?.[x]);b.disabled=!!roomData.players[uid].used?.[x]});
+}
+function selectMove(m){selectedMove=m;document.querySelectorAll("[data-move]").forEach(b=>b.classList.toggle("selected",b.dataset.move===m));checkReady()}
+function selectPower(p){if(p!=="none"&&roomData.players[uid].used?.[p])return;selectedPower=p;document.querySelectorAll("[data-power]").forEach(b=>b.classList.toggle("selected",b.dataset.power===p));checkReady()}
+function checkReady(){$("lockBtn").disabled=!selectedMove;$("selectionHint").textContent=selectedMove?selectedMove.toUpperCase()+" + "+labels[selectedPower]:"Select a move and power"}
+async function lockChoice(){
+ if(!selectedMove)return;let round=roomData.round;
+ try{await set(ref(db,`mindReaderRooms/${roomCode}/rounds/${round}/choices/${uid}`),{move:selectedMove,power:selectedPower});
+ if(selectedPower!=="none")await update(ref(db,`mindReaderRooms/${roomCode}/players/${uid}/used`),{[selectedPower]:true});
+ $("lockBtn").disabled=true;
+ }catch(e){alert("Could not lock choice: "+e.message)}
+}
+function outcome(a,b,reverseA,reverseB){
+ if(a===b)return 0;
+ let normal={rock:"scissors",scissors:"paper",paper:"rock"};
+ let aWins=normal[a]===b;
+ if(reverseA!==reverseB){ // If exactly one player uses Reverse, invert the normal winner.
+   aWins=!aWins;
+ }
+ return aWins?1:2;
+}
+async function resolveRound(){
+ let r=currentRound();if(r.result||Object.keys(r.choices||{}).length<2)return;
+ let entries=Object.entries(r.choices),c1=entries.find(([id])=>roomData.players[id].slot===1)?.[1],c2=entries.find(([id])=>roomData.players[id].slot===2)?.[1];
+ if(!c1||!c2)return;
+ let winner=outcome(c1.move,c2.move,c1.power==="reverse",c2.power==="reverse"),p1=Object.values(roomData.players).find(p=>p.slot===1),p2=Object.values(roomData.players).find(p=>p.slot===2);
+ let h1=p1.hp,h2=p2.hp,detail=`PLAYER 1: ${c1.move.toUpperCase()} + ${labels[c1.power]}\nPLAYER 2: ${c2.move.toUpperCase()} + ${labels[c2.power]}\n`;
+ if(winner===0){h1-=10;h2-=10;detail+="Tie! Both players lose 10 HP."}
+ else{
+ let winnerChoice=winner===1?c1:c2,loser=winner===1?2:1,loserChoice=winner===1?c2:c1;
+ let damage=winnerChoice.power==="double"?40:20;
+ if(loserChoice.power==="shield"){detail+="Shield blocked all incoming damage."}
+ else if(loser===1){h1-=damage;detail+=`PLAYER 2 wins and deals ${damage} damage.`}
+ else{h2-=damage;detail+=`PLAYER 1 wins and deals ${damage} damage.`}
+ }
+ h1=Math.max(0,h1);h2=Math.max(0,h2);
+ let matchWinner=h1===0?2:h2===0?1:0;
+ let title=matchWinner?(matchWinner===mySlot?"🏆 YOU WIN!":"YOU LOSE!"):(winner===0?"⚖️ BOTH HIT!":`PLAYER ${winner} WINS THE ROUND`);
+ let result={title,detail,hp1:h1,hp2:h2,winner:matchWinner,at:Date.now()};
+ const root=ref(db,`mindReaderRooms/${roomCode}`);
+ await runTransaction(root,current=>{
+  if(!current)return current;
+  if(current.rounds?.[current.round]?.result)return current;
+  current.players= current.players||{};
+  for(let id of Object.keys(current.players)){let slot=current.players[id].slot;current.players[id].hp=slot===1?h1:h2;}
+  current.rounds[current.round].result=result;
+  if(matchWinner){current.status="finished";current.winner=Object.keys(current.players).find(id=>current.players[id].slot===matchWinner);}
+  return current;
+ });
+}
+async function nextRound(){
+ let path=`mindReaderRooms/${roomCode}/players/${uid}`;
+ await update(ref(db,path),{ready:true});
+ let s=await get(roomRef),d=s.val(),players=Object.values(d.players||{});
+ if(players.length===2&&players.every(p=>p.ready)&&d.status!=="finished"){
+  let next=d.round+1;await update(roomRef,{round:next,rounds:{...d.rounds,[next]:{choices:{},result:null}}});
+  for(let id of Object.keys(d.players))await update(ref(db,`mindReaderRooms/${roomCode}/players/${id}`),{ready:false});
+  selectedMove=null;selectedPower="none";
+ }
+}
+document.querySelectorAll("[data-move]").forEach(b=>b.addEventListener("click",()=>selectMove(b.dataset.move)));
+document.querySelectorAll("[data-power]").forEach(b=>b.addEventListener("click",()=>selectPower(b.dataset.power)));
+$("createBtn").onclick=createRoom;$("joinToggle").onclick=()=>$("joinBox").classList.toggle("hidden");$("joinBtn").onclick=joinRoom;$("lockBtn").onclick=lockChoice;$("nextBtn").onclick=nextRound;
+$("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(roomCode);$("copyBtn").textContent="Copied!"}catch{$("copyBtn").textContent=roomCode}};
+$("leaveBtn").onclick=()=>{if(unsubscribe)unsubscribe();roomData=null;roomCode=null;show("game",false);show("lobby",true);msg("You left the room. The room may remain available to its other player.")};
+</script>
+</body></html>
